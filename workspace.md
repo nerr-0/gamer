@@ -286,3 +286,161 @@ No changes are needed for these routes since they already use the `authenticateJ
 3. **In-Memory User Storage**: For simplicity, we're using an in-memory store for users. In a real application, use a database like MongoDB, PostgreSQL, or another SQL database.
 
 With these additions, you now have a basic authentication and authorization system for your FIFA Performance Analyzer application. Make sure to replace `'your_secret_key'` with a strong, secure key and consider implementing more robust error handling and security measures for a production environment.
+# BELOW IS AN UPDATED CODE SNIPPET OF THE PROJECT READY FOR HOSTING
+
+To host your Node.js application with authentication and authorization, you can use popular cloud platforms like Heroku, AWS, or DigitalOcean. For the database, you can use MySQL, which is well-supported by most cloud platforms.
+
+### Hosting on Heroku
+
+Heroku is a cloud platform that makes it easy to deploy and manage web applications. It supports Node.js applications and integrates well with various databases, including MySQL.
+
+#### Steps to Deploy on Heroku
+
+1. **Prepare Your Application**
+
+   Ensure your application is ready for deployment by making sure all necessary files are included, such as `package.json`, and that your code does not have hardcoded configurations (e.g., database credentials).
+
+2. **Install Heroku CLI**
+
+   Download and install the Heroku Command Line Interface (CLI) from [Heroku's website](https://devcenter.heroku.com/articles/heroku-cli).
+
+3. **Create a `Procfile`**
+
+   In the root of your project, create a file named `Procfile` (no file extension) to tell Heroku how to run your application:
+
+   ```
+   web: node server.js
+   ```
+
+4. **Initialize a Git Repository**
+
+   If you haven’t already, initialize a Git repository in your project folder:
+
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit"
+   ```
+
+5. **Login to Heroku**
+
+   Open your terminal and log in to Heroku:
+
+   ```bash
+   heroku login
+   ```
+
+6. **Create a Heroku App**
+
+   Create a new Heroku application:
+
+   ```bash
+   heroku create
+   ```
+
+7. **Add MySQL Add-On**
+
+   Heroku does not provide a MySQL add-on by default, so you can use an add-on like ClearDB MySQL:
+
+   ```bash
+   heroku addons:create cleardb:ignite
+   ```
+
+   Note: This will provide you with a ClearDB MySQL database. You can find the connection URL with:
+
+   ```bash
+   heroku config | grep CLEARDB_DATABASE_URL
+   ```
+
+8. **Update Your Code for MySQL Connection**
+
+   In your application, update the code to use the database connection URL provided by ClearDB. For example, you would use the `mysql` package to connect to MySQL.
+
+   First, install the MySQL package:
+
+   ```bash
+   npm install mysql
+   ```
+
+   Then, update your `server.js` or database connection file:
+
+   ```javascript
+   const mysql = require('mysql');
+
+   const dbUrl = process.env.CLEARDB_DATABASE_URL;
+   const connection = mysql.createConnection(dbUrl);
+
+   connection.connect(err => {
+     if (err) {
+       console.error('Error connecting to MySQL database:', err.stack);
+       return;
+     }
+     console.log('Connected to MySQL database.');
+   });
+
+   // Export connection for use in your application
+   module.exports = connection;
+   ```
+
+   Ensure you replace `process.env.CLEARDB_DATABASE_URL` with the actual environment variable name.
+
+9. **Deploy Your Application**
+
+   Deploy your application to Heroku:
+
+   ```bash
+   git push heroku main
+   ```
+
+10. **Open Your Application**
+
+    Open your deployed application in a web browser:
+
+    ```bash
+    heroku open
+    ```
+
+### MySQL Database Design
+
+Here's a simple MySQL schema for storing users and game data:
+
+```sql
+-- Create a database
+CREATE DATABASE fifa_performance_analyzer;
+
+-- Use the database
+USE fifa_performance_analyzer;
+
+-- Table to store user information
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(255) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL
+);
+
+-- Table to store game data
+CREATE TABLE games (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,
+  game_id VARCHAR(255) NOT NULL UNIQUE,
+  game_data JSON NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Table to store game performance analysis
+CREATE TABLE performance (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  game_id INT,
+  goals INT DEFAULT 0,
+  assists INT DEFAULT 0,
+  possession DECIMAL(5, 2) DEFAULT 0.00,
+  FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE
+);
+```
+
+### Summary
+
+- **Hosting**: Deploy your Node.js application on Heroku, which is simple and integrates with ClearDB MySQL for database management.
+- **Database Design**: Use MySQL with tables for users, game data, and performance analysis.
+
+Make sure to adjust configurations and add necessary security measures like proper password hashing and input validation. For production environments, you may need additional configurations such as setting up environment variables and securing your application against potential threats.
